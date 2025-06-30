@@ -1,8 +1,7 @@
-from vectorshape.edge import Edge
+from vectorshape.line import Line
 from vectorshape.vertice import Vertice
 
 
-
-class SimpleCurve(Edge):
-    def __init__(self, vertices: tuple[Vertice], length: float):
-        super().__init__(vertices, length)
+class SimpleCurve(Line):
+    def __init__(self, vertices: tuple[Vertice, Vertice]):
+        super().__init__(vertices)

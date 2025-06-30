@@ -1,8 +1,8 @@
 import numpy as np
 
 class Shape:
-    def __init__(self, pos_arr: list[float]):
-        self.pos = np.array(pos_arr)
+    def __init__(self, pos_arr: tuple[float, float, float]):
+        self.pos: np.array = np.array(pos_arr)
 
     def get_pos(self):
         return self.pos
