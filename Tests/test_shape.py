@@ -7,9 +7,9 @@ from vectorshape.shape import Shape
 class TestShape(unittest.TestCase):
 
     def setUp(self):
-        self.pos = (0.0, 0.0, 0.0)
+        self.pos_instantiate = (0.0, 0.0, 0.0)
         self.name = "shapeson"
-        self.shape = Shape(self.pos, self.name)
+        self.shape = Shape(self.pos_instantiate, self.name)
 
     def test_shape_instantiation(self):
         pos = (1, 2, 3)
@@ -27,8 +27,7 @@ class TestShape(unittest.TestCase):
             Shape((1, 2, 3, 4),"bad shape")
 
     def test_get_pos(self):
-        testPrint(self.shape)
-        npt.assert_array_equal(self.shape.get_pos(), np.array(self.pos))
+        npt.assert_array_equal(self.shape.get_pos(), np.array(self.pos_instantiate))
 
     def test_set_pos(self):
         new_pos = (5, 6, 7)

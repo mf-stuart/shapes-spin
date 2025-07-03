@@ -1,20 +1,18 @@
 import numpy as np
 from tools import numpify_3vector, normpify_3vector
-from typing import Tuple
 
 class Shape:
-    def __init__(self, pos_arr: Tuple[float, float, float], name: str):
-        if len(pos_arr) != 3:
-            raise ValueError("Coordinate vectors take exactly 3 dimensions")
+    def __init__(self, pos_arr: tuple[float, float, float], name: str):
         self.pos: np.ndarray = numpify_3vector(pos_arr)
         self.name = name
+
+    def __repr__(self):
+        return f'<Shape "{self.name}": at [{self.pos[0]},{self.pos[1]},{self.pos[2]}]>'
 
     def get_pos(self) -> np.ndarray:
         return self.pos
 
-    def set_pos(self, pos_arr: Tuple[float]):
-        if len(pos_arr) != 3:
-            raise ValueError("Coordinate vectors take exactly 3 dimensions")
+    def set_pos(self, pos_arr: tuple[float, float, float]):
         self.pos = numpify_3vector(pos_arr)
 
     def get_name(self) -> str:
@@ -29,5 +27,5 @@ class Shape:
     def shift_position(self, movement_vec: tuple[float, float, float]):
         raise NotImplementedError(f'{self.__class__.__name__} does not implement shift_position')
 
-    def rotate(self, angle: tuple[float, float, float]):
+    def rotate(self, matrix: np.array, pivot_vec: tuple[float, float, float]):
         raise NotImplementedError(f'{self.__class__.__name__} does not implement rotate')
