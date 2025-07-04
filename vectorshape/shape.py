@@ -1,5 +1,5 @@
 import numpy as np
-from tools import numpify_3vector, normpify_3vector
+from tools import numpify_3vector
 
 class Shape:
     def __init__(self, pos_arr: tuple[float, float, float], name: str):
@@ -7,7 +7,7 @@ class Shape:
         self.name = name
 
     def __repr__(self):
-        return f'<Shape "{self.name}": at [{self.pos[0]},{self.pos[1]},{self.pos[2]}]>'
+        return f'<{self.__class__} "{self.name}": at [{self.pos[0]},{self.pos[1]},{self.pos[2]}]>'
 
     def get_pos(self) -> np.ndarray:
         return self.pos
@@ -27,5 +27,5 @@ class Shape:
     def shift_position(self, movement_vec: tuple[float, float, float]):
         raise NotImplementedError(f'{self.__class__.__name__} does not implement shift_position')
 
-    def rotate(self, matrix: np.array, pivot_vec: tuple[float, float, float]):
+    def rotate(self, matrices: list[np.ndarray], pivot_vec: tuple[float, float, float]):
         raise NotImplementedError(f'{self.__class__.__name__} does not implement rotate')
