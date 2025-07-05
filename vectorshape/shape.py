@@ -7,7 +7,7 @@ class Shape:
         self.name = name
 
     def __repr__(self):
-        return f'<{self.__class__} "{self.name}": at [{self.pos[0]},{self.pos[1]},{self.pos[2]}]>'
+        return f'<{self.__class__.__name__} "{self.name}": at [{self.pos[0]},{self.pos[1]},{self.pos[2]}]>'
 
     def get_pos(self) -> np.ndarray:
         return self.pos

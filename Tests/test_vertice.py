@@ -5,7 +5,6 @@ from tools import testPrint, numpify_3vector
 
 from vectorshape.vertice import Vertice
 
-
 class TestVertice(unittest.TestCase):
 
     def setUp(self):

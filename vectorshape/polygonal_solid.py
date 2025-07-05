@@ -16,7 +16,7 @@ class PolygonalSolid(Shape):
 
     @override
     def __repr__(self):
-        return f'<{self.__class__} "{self.name}": at [{self.pos[0]},{self.pos[1]},{self.pos[2]}] facing {str(self.this_way_up) if self.this_way_up is not None else "[]"} with [{",".join(f.get_name() for f in self.faces)}]>'
+        return f'<{self.__class__.__name__} "{self.name}": at [{self.pos[0]},{self.pos[1]},{self.pos[2]}] facing {str(self.this_way_up) if self.this_way_up is not None else "[]"} with [{",".join(f.get_name() for f in self.faces)}]>'
 
     @override
     def calibrate_center(self):
@@ -48,11 +48,14 @@ class PolygonalSolid(Shape):
         for ray in rays:
             for face in self.faces:
                 if candidate := face.polygon_intersection_point(ray, self.pos):
+
                     to_light_box = candidate - light_box.get_pos()
                     face_unit = normpify_3vector(face.get_normal())
                     light_unit = normpify_3vector(to_light_box)
                     distance_mult = inverse_square_multiplier(to_light_box)
-                    brightness = np.dot(face_unit, light_unit) * distance_mult
+
+                    brightness = np.clip(np.dot(face_unit, light_unit) * distance_mult, 0, 1)
+
                     reflection_point_list.append(ReflectionPoint(candidate, brightness, f"{face.get_name()}[{str(candidate)}] reflection"))
                     break
         return reflection_point_list

@@ -3,6 +3,7 @@ import default_constants as k
 
 from typing import override
 
+from render.pixel_data import PixelData
 from tools import normpify_3vector
 from vectorshape.polygon import Polygon
 from vectorshape.reflection_point import ReflectionPoint
@@ -20,10 +21,11 @@ class SensorRect(Polygon):
         self.add_vertice(Vertice((k.VIEW_WIDTH * k.PIXEL_SIZE, 0, k.VIEW_HEIGHT * k.PIXEL_SIZE), "TR"))
         self.add_vertice(Vertice((0, 0, 0), "BL"))
         self.add_vertice(Vertice((k.VIEW_WIDTH * k.PIXEL_SIZE, 0, 0), "BR"))
+        self.generate_plane()
 
     @override
     def __repr__(self):
-        return f'<ScreenRect "{self.name}": at [{self.pos[0]},{self.pos[1]},{self.pos[2]}] facing {str(self.normal) if self.normal is not None else "[]"} with [{",".join(v.get_name() for v in self.vertices_list)}]>'
+        return f'<{self.__class__.__name__} "{self.name}": at [{self.pos[0]},{self.pos[1]},{self.pos[2]}] facing {str(self.normal) if self.normal is not None else "[]"} with [{",".join(v.get_name() for v in self.vertices_list)}]>'
 
     @override
     def calibrate_center(self):
@@ -63,7 +65,12 @@ class SensorRect(Polygon):
     def open_shutter(self, reflections: list[ReflectionPoint]):
         to_render = []
         for reflection in reflections:
-            if candidate := self.planar_ray_intersection(-self.normal, reflection.get_pos()) is not None:
-                pass
-        pass
+            if (candidate := self.polygon_intersection_point(-self.normal, reflection.get_pos())) is not None:
+                rough_indices = self.coplanar_position_by_basis(candidate)
 
+                indices = tuple(map(np.floor, rough_indices))
+                length = np.linalg.norm(candidate - reflection.get_pos())
+                brightness = reflection.get_brightness()
+
+                to_render.append(PixelData(indices, brightness, length))
+        return to_render

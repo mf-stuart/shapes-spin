@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 import default_constants as k
 
@@ -5,44 +7,54 @@ def testPrint(obj):
     print(obj)
 
 def numpify_3vector(arr) -> np.ndarray:
-    if not all(isinstance(x, (int, float)) for x in arr):
-        raise TypeError("Input must be a numerical vector")
-    elif isinstance(arr, np.ndarray):
+    if isinstance(arr, np.ndarray):
         if arr.shape != (3,):
             raise ValueError("Expected 3D array")
+        if not np.issubdtype(arr.dtype, np.number):
+            raise TypeError("Input array must be numeric")
         return arr
     else:
         if len(arr) != 3:
             raise ValueError("Expected 3D array")
-        return np.array(arr)
+        if not all(isinstance(x, (int, float)) for x in arr):
+            raise TypeError("Input must be a numerical vector")
+        return np.array(arr, dtype=float)
 
 def numpify_2vector(arr) -> np.ndarray:
-    if not all(isinstance(x, (int, float)) for x in arr):
-        raise TypeError("Input must be a numerical vector")
-    elif isinstance(arr, np.ndarray):
+    if isinstance(arr, np.ndarray):
         if arr.shape != (2,):
             raise ValueError("Expected 2D array")
+        if not np.issubdtype(arr.dtype, np.number):
+            raise TypeError("Input array must be numeric")
         return arr
     else:
         if len(arr) != 2:
             raise ValueError("Expected 2D array")
-        return np.array(arr)
+        if not all(isinstance(x, (int, float)) for x in arr):
+            raise TypeError("Input must be a numerical vector")
+        return np.array(arr, dtype=float)
 
 def normpify_3vector(arr) -> np.ndarray:
-    if not all(isinstance(x, (int, float)) for x in arr):
-        raise TypeError("Input must be a numerical vector")
-    elif isinstance(arr, np.ndarray):
+    if isinstance(arr, np.ndarray):
         if arr.shape != (3,):
             raise ValueError("Expected 3D array")
-        if np.linalg.norm(arr, axis=0) < k.EPSILON:
+        if not np.issubdtype(arr.dtype, np.number):
+            raise TypeError("Input array must be numeric")
+        norm = np.linalg.norm(arr)
+        if norm < k.EPSILON:
             raise ValueError("Zero-length vector cannot be normalized")
-        return arr / np.linalg.norm(arr, axis=0)
+        return arr / norm
     else:
         if len(arr) != 3:
             raise ValueError("Expected 3D array")
-        if np.linalg.norm(np.array(arr), axis=0) < k.EPSILON:
+        if not all(isinstance(x, (int, float)) for x in arr):
+            raise TypeError("Input must be a numerical vector")
+        arr_np = np.array(arr, dtype=float)
+        norm = np.linalg.norm(arr_np)
+        if norm < k.EPSILON:
             raise ValueError("Zero-length vector cannot be normalized")
-        return np.array(arr) / np.linalg.norm(np.array(arr), axis=0)
+        return arr_np / norm
+
 
 
 def x_axis_rotation_matrix(t: float) -> np.ndarray:
@@ -84,3 +96,10 @@ def inverse_square_multiplier(vector: np.ndarray) -> float:
     vector = numpify_3vector(vector)
     length = np.linalg.norm(vector)
     return 1 / (length ** 2)
+
+def bucketize(x: float, n: int) -> int:
+    idx = int(x * n)
+    return min(idx, n - 1)
+
+def clear_console():
+    os.system('cls' if os.name == 'nt' else 'clear')

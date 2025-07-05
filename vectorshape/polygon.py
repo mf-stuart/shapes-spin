@@ -17,7 +17,7 @@ class Polygon(Shape):
 
     @override
     def __repr__(self):
-        return f'<{self.__class__} "{self.name}": at [{self.pos[0]},{self.pos[1]},{self.pos[2]}] facing {str(self.normal) if self.normal is not None else "[]"} with [{",".join(v.get_name() for v in self.vertices_list)}]>'
+        return f'<{self.__class__.__name__} "{self.name}": at [{self.pos[0]},{self.pos[1]},{self.pos[2]}] facing {str(self.normal) if self.normal is not None else "[]"} with [{",".join(v.get_name() for v in self.vertices_list)}]>'
 
     @override
     def set_pos(self, pos_arr: tuple[float, float, float]):
@@ -26,11 +26,11 @@ class Polygon(Shape):
         self.shift_position(displacement_vector)
 
     @override
-    def shift_position(self, movement_vec: tuple[float, float, float]):
-        movement_vec = numpify_3vector(movement_vec)
-        self.pos += movement_vec
+    def shift_position(self, displacement_vector: tuple[float, float, float]):
+        displacement_vector = numpify_3vector(displacement_vector)
+        self.pos += displacement_vector
         for vertice in self.vertices_list:
-            vertice.set_pos(vertice.get_pos() + movement_vec)
+            vertice.set_pos(vertice.get_pos() + displacement_vector)
 
     @override
     def calibrate_center(self):
@@ -55,11 +55,13 @@ class Polygon(Shape):
     def add_vertice(self, vertice: Vertice):
         if vertice not in self.vertices_list and self.new_vertex_fits(vertice):
             self.vertices_list.append(vertice)
+            if len(self.vertices_list) >= 3:
+                self.generate_plane()
 
     def new_vertex_fits(self, vertice: Vertice):
         if self.normal is None:
             return True
-        return abs(np.dot(vertice.get_pos() - self.pos, self.normal)) < k.EPSILON
+        return self.verify_coplanarity(vertice.get_pos())
 
     def remove_vertice(self, vertice: Vertice):
         self.vertices_list.remove(vertice)
@@ -72,10 +74,8 @@ class Polygon(Shape):
 
     def generate_plane(self) -> tuple[float, float, float, float]:
         if len(self.vertices_list) < 3:
-            raise TypeError("polygon does not have enough vertices to generate a plane.")
-
+            raise ValueError("polygon does not have enough vertices to generate a plane.")
         self.calibrate_center()
-
         p = self.pos
         px = p[0]
         py = p[1]
@@ -83,9 +83,9 @@ class Polygon(Shape):
 
         v1 = self.vertices_list[0].get_pos() - p
         v2 = self.vertices_list[1].get_pos() - p
-
-        normal = normpify_3vector(np.cross(v1, v2))
-        if np.linalg.norm(normal) < k.EPSILON:
+        try:
+            normal = normpify_3vector(np.cross(v1, v2))
+        except ValueError:
             raise ValueError("Degenerate polygon: cannot compute normal")
         self.normal = normal
         return self.plane_equation(px, py, pz)
@@ -100,10 +100,11 @@ class Polygon(Shape):
         return self.normal is not None and len(self.vertices_list) >= 3
 
     def verify_coplanarity(self, pos: tuple[float, float, float]) -> bool:
-        if self.verify_plane():
-            pos = numpify_3vector(pos)
-            return abs(np.dot(pos - self.pos, self.normal)) < k.EPSILON
-        return False
+        if not self.verify_plane():
+            raise ValueError("polygon does not have enough vertices to verify coplanarity.")
+        pos = numpify_3vector(pos)
+        return abs(np.dot(pos - self.pos, self.normal)) < k.EPSILON
+
 
     def ensure_normal_out(self, solid: Shape):
         if not self.verify_plane():
@@ -125,23 +126,23 @@ class Polygon(Shape):
     def coplanar_position_by_basis(self, coplanar_pos: tuple[float, float, float]) -> tuple[float, float]:
         coplanar_pos = numpify_3vector(coplanar_pos)
         coplanar_vec = coplanar_pos - self.pos
+
         if self.verify_coplanarity(coplanar_pos):
             u, v = self.generate_orthogonal_basis()
             alpha = np.dot(coplanar_vec, u) / np.dot(u, u)
             beta = np.dot(coplanar_vec, v) / np.dot(v, v)
-            return alpha, beta
+            return alpha, -beta
         return None
 
     def polygon_intersection_point(self, ray_vector: tuple[float, float, float], origin: tuple[float, float, float]) -> np.ndarray:
         candidate_point = self.planar_ray_intersection(ray_vector, origin)
-        if candidate_point is not None and self.point_in_polygon_3d(candidate_point) is not None:
+        if candidate_point is not None and self.point_in_polygon_3d(candidate_point):
             return candidate_point
         return None
 
     def planar_ray_intersection(self, ray_vector: tuple[float, float, float], origin: tuple[float, float, float]) -> np.ndarray:
         if not self.verify_plane():
             raise ValueError("plane could not be established for ray intersection")
-
         origin = numpify_3vector(origin)
         ray_vector = normpify_3vector(ray_vector)
         denom = np.dot(self.normal, ray_vector)
@@ -158,7 +159,7 @@ class Polygon(Shape):
 
     def point_in_polygon_3d(self, q: tuple[float, float, float]) -> bool:
         if not self.verify_plane():
-            return False
+            raise ValueError("polygon normal not generated or does not have enough vertices to verify point inside polygon.")
         q = numpify_3vector(q)
         a, b, c, d = self.plane_eq
         if abs(q[0] * a + q[1] * b + q[2] * c + d) > k.EPSILON:
@@ -168,7 +169,7 @@ class Polygon(Shape):
 
     def point_in_polygon_2d(self, q: tuple[float, float]) -> bool:
         if not self.verify_plane():
-            return False
+            raise ValueError("polygon normal not generated or does not have enough vertices to verify point inside polygon.")
         q = numpify_2vector(q)
         polygon_2d = [self.project(vertice.get_pos()) for vertice in self.vertices_list]
 
@@ -190,8 +191,8 @@ class Polygon(Shape):
         return True
 
     def project(self, q: tuple[float, float, float]) -> np.ndarray:
-        if self.verify_plane():
-            q = numpify_3vector(q)
-            u, v = self.generate_orthogonal_basis()
-            return  numpify_2vector([np.dot(q - self.vertices_list[0].get_pos(), u), np.dot(q - self.vertices_list[0].get_pos(), v)])
-        return None
+        if not self.verify_plane():
+            raise ValueError("plane could not be established for projection")
+        q = numpify_3vector(q)
+        u, v = self.generate_orthogonal_basis()
+        return  numpify_2vector([np.dot(q - self.vertices_list[0].get_pos(), u), np.dot(q - self.vertices_list[0].get_pos(), v)])
