@@ -1,7 +1,8 @@
 from typing_extensions import override
-
 import numpy as np
-from tools import numpify_3vector, normpify_3vector, generate_ray_tracers, inverse_square_multiplier
+
+import default_constants as k
+from tools import numpify_3vector, normpify_3vector, generate_ray_tracers, inverse_square_multiplier, plot_reflection_points
 from vectorshape.polygon import Polygon
 from vectorshape.reflection_point import ReflectionPoint
 from vectorshape.shape import Shape
@@ -22,10 +23,13 @@ class PolygonalSolid(Shape):
     def calibrate_center(self):
         vertices: list[Vertice] = []
         for face in self.faces:
+            face.calibrate_center()
+            face.ensure_normal_in(self)
             for vertex in face.get_vertices():
                 if vertex not in vertices:
                     vertices.append(vertex)
         self.pos = np.mean([vertice.get_pos() for vertice in vertices], axis=0)
+
 
     @override
     def shift_position(self, movement_vec: tuple[float, float, float]):
@@ -42,22 +46,33 @@ class PolygonalSolid(Shape):
         for face in self.faces:
             face.rotate(matrices, pivot_vec)
 
+    def add_face(self, face: Polygon):
+        self.faces.append(face)
+
+
+    def remove_face(self, face: Polygon):
+        self.faces.remove(face)
+
+
+
     def make_reflection_points(self, light_box: Vertice) -> list[ReflectionPoint]:
         reflection_point_list = []
         rays = generate_ray_tracers()
+        self.calibrate_center()
         for ray in rays:
             for face in self.faces:
-                if candidate := face.polygon_intersection_point(ray, self.pos):
+                candidate = face.polygon_intersection_point(ray, self.pos)
+                if candidate is None:
+                    continue
 
-                    to_light_box = candidate - light_box.get_pos()
-                    face_unit = normpify_3vector(face.get_normal())
-                    light_unit = normpify_3vector(to_light_box)
-                    distance_mult = inverse_square_multiplier(to_light_box)
-
-                    brightness = np.clip(np.dot(face_unit, light_unit) * distance_mult, 0, 1)
-
-                    reflection_point_list.append(ReflectionPoint(candidate, brightness, f"{face.get_name()}[{str(candidate)}] reflection"))
-                    break
+                to_light_box = light_box.get_pos() - candidate
+                face_unit = -normpify_3vector(face.get_normal())
+                light_unit = normpify_3vector(to_light_box)
+                distance_mult = inverse_square_multiplier(to_light_box)
+                brightness = np.clip(np.dot(face_unit, light_unit) * distance_mult, 0, 1)
+                reflection_point_list.append(ReflectionPoint(candidate, brightness, f"{face.get_name()}[{str(candidate)}] reflection"))
+                break
         return reflection_point_list
+
 
 

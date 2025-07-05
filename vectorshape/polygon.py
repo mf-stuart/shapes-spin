@@ -42,14 +42,13 @@ class Polygon(Shape):
             pivot_vec = self.pos
 
         pivot_vec = numpify_3vector(pivot_vec)
-        translated_vertices_positions = [v.get_pos() - self.pos for v in self.vertices_list]
         r_matrix = reduce(np.matmul, matrices)
-
-        rotated_vertices_positions = [r_matrix @ tv for tv in translated_vertices_positions]
-        resolved_vertices_position = [v + pivot_vec for v in rotated_vertices_positions]
-
-        for vert, new_pos in zip(self.vertices_list, resolved_vertices_position):
+        for vert in self.vertices_list:
+            relative = vert.get_pos() - pivot_vec
+            rotated = r_matrix @ relative
+            new_pos = rotated + pivot_vec
             vert.set_pos(new_pos)
+
         self.generate_plane()
 
     def add_vertice(self, vertice: Vertice):
@@ -57,6 +56,7 @@ class Polygon(Shape):
             self.vertices_list.append(vertice)
             if len(self.vertices_list) >= 3:
                 self.generate_plane()
+                self.calibrate_center()
 
     def new_vertex_fits(self, vertice: Vertice):
         if self.normal is None:
@@ -105,12 +105,11 @@ class Polygon(Shape):
         pos = numpify_3vector(pos)
         return abs(np.dot(pos - self.pos, self.normal)) < k.EPSILON
 
-
-    def ensure_normal_out(self, solid: Shape):
+    def ensure_normal_in(self, solid: Shape):
         if not self.verify_plane():
             raise ValueError("polygon has not been calibrated or does not have enough vertices to generate a plane.")
         to_face = self.vertices_list[0].get_pos() - solid.get_pos()
-        if np.dot(to_face, self.normal) < 0:
+        if np.dot(to_face, self.normal) > 0:
             self.normal = -self.normal
 
     def get_normal(self) -> np.ndarray:
@@ -122,17 +121,6 @@ class Polygon(Shape):
         u = normpify_3vector(self.vertices_list[0].get_pos() - self.pos)
         v = normpify_3vector(np.cross(self.normal, u))
         return u,v
-
-    def coplanar_position_by_basis(self, coplanar_pos: tuple[float, float, float]) -> tuple[float, float]:
-        coplanar_pos = numpify_3vector(coplanar_pos)
-        coplanar_vec = coplanar_pos - self.pos
-
-        if self.verify_coplanarity(coplanar_pos):
-            u, v = self.generate_orthogonal_basis()
-            alpha = np.dot(coplanar_vec, u) / np.dot(u, u)
-            beta = np.dot(coplanar_vec, v) / np.dot(v, v)
-            return alpha, -beta
-        return None
 
     def polygon_intersection_point(self, ray_vector: tuple[float, float, float], origin: tuple[float, float, float]) -> np.ndarray:
         candidate_point = self.planar_ray_intersection(ray_vector, origin)
@@ -195,4 +183,10 @@ class Polygon(Shape):
             raise ValueError("plane could not be established for projection")
         q = numpify_3vector(q)
         u, v = self.generate_orthogonal_basis()
-        return  numpify_2vector([np.dot(q - self.vertices_list[0].get_pos(), u), np.dot(q - self.vertices_list[0].get_pos(), v)])
+        origin = self.get_pos()
+        diff = q - origin
+
+        u_proj = np.dot(diff, u) / np.dot(u, u)
+        v_proj = np.dot(diff, v) / np.dot(v, v)
+
+        return numpify_2vector([u_proj, v_proj])

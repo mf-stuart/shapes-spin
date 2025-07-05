@@ -79,7 +79,7 @@ class TestPolygon(unittest.TestCase):
         self.polygon.add_vertice(self.v2)
         self.polygon.add_vertice(self.v3)
         copos = self.v1.get_pos()
-        result = self.polygon.coplanar_position_by_basis(copos)
+        result = self.polygon.find_coordinate_from_projection(copos)
         self.assertIsNotNone(result)
         self.assertEqual(len(result), 2)
 

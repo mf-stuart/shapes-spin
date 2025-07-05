@@ -1,11 +1,14 @@
 class PixelData:
     def __init__(self, indices: tuple[int, int], brightness: float, length: float):
-        self.indices = indices
+        self.indices = tuple(map(int, indices))
         self.brightness = brightness
         self.length = length
 
+    def __repr__(self):
+        return f'<{self.__class__.__name__}: [{self.indices[0]},{self.indices[1]}] l={self.length} b={self.brightness}>'
+
     def set_indices(self, indices: tuple[int, int]):
-        self.indices = indices
+        self.indices = tuple(map(int, indices))
 
     def get_indices(self) -> tuple[int, int]:
         return self.indices
