@@ -131,5 +131,5 @@ class SensorRect(Polygon):
             length = np.linalg.norm(self.camera_pos - reflection.get_pos())
             brightness = reflection.get_brightness()
             to_render.append(PixelData(indices, brightness, length))
-        plot_pixel_data(to_render)
+        # plot_pixel_data(to_render)
         return to_render

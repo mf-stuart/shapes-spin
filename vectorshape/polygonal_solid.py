@@ -1,3 +1,5 @@
+from functools import reduce
+
 from typing_extensions import override
 import numpy as np
 
@@ -35,25 +37,37 @@ class PolygonalSolid(Shape):
     def shift_position(self, movement_vec: tuple[float, float, float]):
         movement_vec = numpify_3vector(movement_vec)
         self.pos += movement_vec
-        for face in self.faces:
-            face.shift_position(movement_vec)
+        for v in self.get_vertices():
+            v.set_pos(v.get_pos() + movement_vec)
 
     @override
     def rotate(self, matrices: list[np.ndarray], pivot_vec: tuple[float, float, float]=None):
         if pivot_vec is None:
             pivot_vec = self.pos
+
         pivot_vec = numpify_3vector(pivot_vec)
+        r_matrix = reduce(np.matmul, matrices)
+        for vert in self.get_vertices():
+            relative = vert.get_pos() - pivot_vec
+            rotated = r_matrix @ relative
+            new_pos = rotated + pivot_vec
+            vert.set_pos(new_pos)
         for face in self.faces:
-            face.rotate(matrices, pivot_vec)
+            face.generate_plane()
+
+    def get_vertices(self) -> list[Vertice]:
+        vertices: list[Vertice] = []
+        for face in self.faces:
+            for vertex in face.get_vertices():
+                if vertex not in vertices:
+                    vertices.append(vertex)
+        return vertices
 
     def add_face(self, face: Polygon):
         self.faces.append(face)
 
-
     def remove_face(self, face: Polygon):
         self.faces.remove(face)
-
-
 
     def make_reflection_points(self, light_box: Vertice) -> list[ReflectionPoint]:
         reflection_point_list = []
@@ -72,6 +86,7 @@ class PolygonalSolid(Shape):
                 brightness = np.clip(np.dot(face_unit, light_unit) * distance_mult, 0, 1)
                 reflection_point_list.append(ReflectionPoint(candidate, brightness, f"{face.get_name()}[{str(candidate)}] reflection"))
                 break
+        # plot_reflection_points(reflection_point_list)
         return reflection_point_list
 
 

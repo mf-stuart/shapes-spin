@@ -9,9 +9,8 @@ UNIT_Z = np.array([0,0,1])
 VIEW_HEIGHT = 20
 VIEW_WIDTH = 180
 CAMERA_DEPTH = 3
-PIXEL_SIZE = 0.1
+PIXEL_SIZE = 0.07
 
-ANGULAR_DELTA = np.radians(2)
-
+ANGULAR_DELTA = np.radians(8)
 
 PIXEL_TYPES = ".:-=+*#%@"

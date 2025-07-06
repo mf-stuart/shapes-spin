@@ -5,6 +5,7 @@ import default_constants as k
 from render.pixel_data import PixelData
 
 
+
 def testPrint(obj):
     print(obj)
 
@@ -56,7 +57,6 @@ def normpify_3vector(arr) -> np.ndarray:
         if norm < k.EPSILON:
             raise ValueError("Zero-length vector cannot be normalized")
         return arr_np / norm
-
 
 
 def x_axis_rotation_matrix(t: float) -> np.ndarray:
