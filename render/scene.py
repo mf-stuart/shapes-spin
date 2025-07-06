@@ -10,7 +10,7 @@ from vectorshape.vertice import Vertice
 class Scene():
     def __init__(self):
         self.viewport = Viewport()
-        self.light_box = Vertice((30,-30,30), "LightBox")
+        self.light_box = Vertice((0,-1,1), "LightBox")
         self.solids_actors: list[PolygonalSolid] =  []
 
     def setup(self):
@@ -21,7 +21,7 @@ class Scene():
             x_axis_rotation_matrix(np.radians(35.264)),
             z_axis_rotation_matrix(np.radians(45))
         ]
-        # cube.rotate(matrices)
+        cube.rotate(matrices)
 
         self.solids_actors.append(cube)
 

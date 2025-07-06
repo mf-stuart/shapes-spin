@@ -69,5 +69,6 @@ class Viewport:
             for x in range(k.VIEW_WIDTH):
                 pixel = self.screen[y, x]
                 line_pixels.append(pixel)
+                line_pixels.append(pixel)
             print(''.join(line_pixels), flush=True)
 

@@ -101,11 +101,6 @@ def generate_ray_tracers() -> list[np.ndarray]:
 
     return vectors
 
-def inverse_square_multiplier(vector: np.ndarray) -> float:
-    vector = numpify_3vector(vector)
-    length = np.linalg.norm(vector)
-    return 1
-
 def bucketize(x: float, n: int) -> int:
     idx = int(x * n)
     return min(idx, n - 1)

@@ -4,7 +4,7 @@ from typing_extensions import override
 import numpy as np
 
 import default_constants as k
-from tools import numpify_3vector, normpify_3vector, generate_ray_tracers, inverse_square_multiplier, plot_reflection_points
+from tools import numpify_3vector, normpify_3vector, generate_ray_tracers, plot_reflection_points
 from vectorshape.polygon import Polygon
 from vectorshape.reflection_point import ReflectionPoint
 from vectorshape.shape import Shape
@@ -82,8 +82,7 @@ class PolygonalSolid(Shape):
                 to_light_box = light_box.get_pos() - candidate
                 face_unit = -normpify_3vector(face.get_normal())
                 light_unit = normpify_3vector(to_light_box)
-                distance_mult = inverse_square_multiplier(to_light_box)
-                brightness = np.clip(np.dot(face_unit, light_unit) * distance_mult, 0, 1)
+                brightness = np.clip(np.dot(face_unit, light_unit), 0, 1)
                 reflection_point_list.append(ReflectionPoint(candidate, brightness, f"{face.get_name()}[{str(candidate)}] reflection"))
                 break
         # plot_reflection_points(reflection_point_list)
